@@ -1,0 +1,56 @@
+services:
+  flask-backend:
+    build: ./backend
+    container_name: flask-backend
+    ports:
+      - "5001:5000"
+    depends_on:
+      - db  # Ensure backend waits for the db to be ready
+    restart: always
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+    networks:
+      - backend-network
+
+  react-frontend:
+    build: ./frontend
+    container_name: react-frontend
+    ports:
+      - "3001:80"
+    networks:
+      - backend-network
+
+  nginx:
+    build: ./nginx
+    container_name: nginx
+    ports:
+      - "8080:80"
+    depends_on:
+      - flask-backend
+      - react-frontend
+    networks:
+      - backend-network
+
+  db:
+    image: postgres:13
+    container_name: db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+#    ports:
+#      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
+
+volumes:
+  db-data:
+    driver: local
+
